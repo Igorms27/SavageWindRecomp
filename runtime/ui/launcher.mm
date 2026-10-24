@@ -232,8 +232,10 @@ static std::string check_copied_files(const std::string &root) {
 // "" = ready to play, else what is wrong
 static std::string check_game_files(const std::string &root) {
     std::string why = check_copied_files(root);
-    if (why.empty() && !gamelib_present(root.c_str()))  // (a library with another id: an update of Savage Wind)
-        return file_exists(root + "/" GAMELIB_NAME) ? "Game code built for another version" : "Game code not built yet";
+    if (why.empty() && !gamelib_present(root.c_str())) {  // (a library with another id: an update of Savage Wind, or
+        if (!file_exists(root + "/" GAMELIB_NAME)) return "Game code not built yet";  // a PC with another kind of CPU)
+        return gamelib_other_cpu(root.c_str()) ? "Game code built for another CPU" : "Game code built for another version";
+    }
     return why;
 }
 
@@ -318,6 +320,10 @@ static void explain_status(const std::string &st) {
         set_job("The game code was built for another version of Savage Wind", true,
                 "Savage Wind was updated: choose Set up game files to build the game code again from your copy of the "
                 "game. This takes a few minutes.");
+    else if (st == "Game code built for another CPU")  // (runtime/gamelib.h: the game folder came from another PC)
+        set_job("The game code was built for another kind of CPU", true,
+                "This PC's CPU needs the game code built for it: choose Set up game files to build it again from your "
+                "copy of the game. This takes a few minutes.");
     else if (st == "Game code not built yet")
         set_job("The game code isn't built yet", true,
                 "Choose Set up game files to build it from your copy of the game. This takes a few minutes.");
@@ -855,6 +861,10 @@ static void prelaunch_tab(float sc) {
             ImGui::IsKeyPressed(ImGuiKey_Escape, false))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
+    }
+    if (gamelib_compat()) {  // (runtime/gamelib.h: built for CPUs without AVX2 / FMA)
+        ImGui::Spacing();
+        ImGui::TextDisabled("%s", tr("Game code: compatible mode (this CPU has no AVX2 / FMA), slower"));
     }
     ImGui::Spacing();
     ImGui::Spacing();

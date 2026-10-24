@@ -725,6 +725,13 @@ Pendiente:
        operandos a mano. La única diferencia con ARM: un resultado que redondea al menor normal desde abajo puede
        quedarse (ARM detecta el underflow antes de redondear). Cambia `simd.h` y el lifter: hay que regenerar y
        recompilar la librería del juego.
+     - CPU sin AVX2 / FMA (#9): en x86-64 el código del juego tiene dos destinos, x86-64-v3 (`GENARCH`) y el
+       compatible x86-64-v2 (`GENARCH_COMPAT`, sin `-mfma`). La pantalla de inicio compila el que corre la CPU
+       (`gamelib_compat`, `runtime/gamelib.h`), cada uno con su id (`GAMELIB_ID`, `GAMELIB_ID_COMPAT`): una
+       librería v3 nunca se carga en una CPU que no la corre, y una carpeta llevada a un PC del otro tipo se vuelve
+       a compilar. Sin instrucciones FMA `simd.h` usa su propio fma (`simd_softfma.h`, que sigue al MXCSR como
+       ellas; `tools/test_softfma.c` lo compara bit a bit): el de glibc se equivoca con FTZ / DAZ o redondeos
+       dirigidos. `SAVAGEWIND_COMPAT_CPU=1` elige el compatible en cualquier CPU (para comparar los dos).
      - Unos ~10 dispatches por frame escriben en la memoria del juego con STG (sus storage buffers, 7-8 por dispatch,
        pequeños, en el heap importado), el primero ~100 draws dentro del frame. Para no copiar en la CPU memoria a
        medio escribir, el resto de la lista iba a la GPU de una vez al final: la GPU esperaba a que se tradujera todo

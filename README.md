@@ -52,7 +52,9 @@ The setup and configuration screens show Savage Wind's own art. To see a picture
 next to `savagewind.exe` as `splash.jpg` or `splash.png`; it's only read from your folder and never part of
 Savage Wind.
 
-Needs Windows 10 or later, a CPU with AVX2, a GPU with Vulkan 1.3 and about 35 GB of free disk space.
+Needs Windows 10 or later, a CPU with SSE4.2 (2008 or newer), a GPU with Vulkan 1.3 and about 35 GB of free disk
+space. AVX2 isn't required: on a CPU without AVX2 / FMA the setup builds the game code in a compatible mode, which runs
+slower.
 
 ## What you need
 
@@ -61,7 +63,8 @@ Needs Windows 10 or later, a CPU with AVX2, a GPU with Vulkan 1.3 and about 35 G
   - the **ExeFS** of that version (`main`, `main.npdm`, `rtld`, `sdk`, `subsdk0`)
   - the **RomFS** with that update applied (base game and update merged)
 - DLC: not supported yet (planned, see the roadmap); the title screen's Downloadable Content entry is hidden until then.
-- Windows 10 or later (x86-64, a CPU with AVX2) or Linux (x86-64), and a GPU with Vulkan 1.3.
+- Windows 10 or later or Linux, on x86-64 (a CPU with SSE4.2; without AVX2 / FMA the game code runs in a slower
+  compatible mode), and a GPU with Vulkan 1.3.
 
 The files go in `extracted/` next to the program (git ignores this folder):
 
