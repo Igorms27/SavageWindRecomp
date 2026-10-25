@@ -147,6 +147,11 @@ static void log_to_file_without_console(void) {
     if (slash) slash[1] = 0;
     snprintf(g_log_path, sizeof g_log_path, "%ssavagewind.log", exe);
     bool append = getenv("SAVAGEWIND_LOG_APPEND") != NULL;
+    if (!append) {  // the last run's log stays as savagewind.prev.log: opening again after a failed setup kept nothing of it
+        char prev[MAX_PATH + 16];
+        snprintf(prev, sizeof prev, "%ssavagewind.prev.log", exe);
+        MoveFileExA(g_log_path, prev, MOVEFILE_REPLACE_EXISTING);
+    }
     if (!freopen(g_log_path, append ? "ab" : "wb", stderr)) { g_log_path[0] = 0; return; }
     setvbuf(stderr, NULL, _IONBF, 0);
     _dup2(_fileno(stderr), _fileno(stdout));

@@ -90,6 +90,11 @@ static void log_to_file_without_terminal(void) {
     mkdir(dir, 0755);
     snprintf(g_log_path, sizeof g_log_path, "%s/savagewind.log", dir);
     bool append = getenv("SAVAGEWIND_LOG_APPEND") != NULL;
+    if (!append) {  // the last run's log stays as savagewind.prev.log: opening again after a failed setup kept nothing of it
+        char prev[1100];
+        snprintf(prev, sizeof prev, "%s/savagewind.prev.log", dir);
+        rename(g_log_path, prev);
+    }
     if (!freopen(g_log_path, append ? "a" : "w", stderr)) { g_log_path[0] = 0; return; }
     dup2(STDERR_FILENO, STDOUT_FILENO);
     setenv("SAVAGEWIND_LOG_APPEND", "1", 1);
@@ -247,7 +252,7 @@ int plat_proc_wait(PlatProc p, bool block) {
     pid_t r = waitpid((pid_t)p, &st, block ? 0 : WNOHANG);
     if (r == 0) return -1;
     if (r < 0) return 255;
-    return WIFEXITED(st) ? WEXITSTATUS(st) : 255;
+    return WIFEXITED(st) ? WEXITSTATUS(st) : WIFSIGNALED(st) ? 128 + (WTERMSIG(st) & 127) : 255;  // (as a shell: 137 = killed)
 }
 
 static int rm_entry(const char *path, const struct stat *sb, int flag, struct FTW *ftw) {

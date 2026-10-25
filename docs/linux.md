@@ -127,7 +127,8 @@ The aarch64 AppImage is experimental: built on x86-64, only its start screen has
 3. **What happened**: start screen? extraction? in game? where it stopped, any visual problems (screenshots help).
    With a controller: its model, and whether it works (the log names it: `[input] gamepad: ...`).
 4. **The log**: `~/.local/share/savagewind/savagewind.log` (or the terminal output when started from a terminal).
-   A crash writes `*** signal ...` and a backtrace there; attach the whole file.
+   A crash writes `*** signal ...` and a backtrace there; attach the whole file. Opened again since? The run before is
+   `savagewind.prev.log` next to it.
 5. **A crash backtrace with gdb** when the log's isn't enough:
 
        ./Savage_Wind-0.3.0-alpha.3-aarch64.AppImage --appimage-extract    # -> squashfs-root/

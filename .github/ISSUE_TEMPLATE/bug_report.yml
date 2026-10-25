@@ -61,7 +61,7 @@ body:
     id: log
     attributes:
       label: savagewind.log
-      description: Attach savagewind.log from the Savage Wind folder (drag the file here). Screenshots or a short video help too.
+      description: Attach savagewind.log from the Savage Wind folder (drag the file here); if you opened Savage Wind again after the problem, savagewind.prev.log there is the run before. Screenshots or a short video help too.
   - type: checkboxes
     id: legal
     attributes:

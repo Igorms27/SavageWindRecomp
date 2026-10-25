@@ -231,6 +231,37 @@ static void log_tail(const char *path, char *out, size_t n) {  // the last line 
     snprintf(out, n, "%s", nl ? nl + 1 : buf);
 }
 
+// The end of a failed generator's log, into this log: the work folder (and the generator's own log with it) is
+// deleted after the build, and a crash leaves a stack (faulthandler, tools/gen.py) of many lines, not one message.
+static void log_gen_tail(const char *path, int exit_code) {
+    if (exit_code > 128 && exit_code < 255)  // (Linux, macOS: ended by a signal; 9, killed: often out of memory)
+        LOG("[gamebuild]   ended by signal %d\n", exit_code - 128);
+    else  // (255 on Windows: also a crash, e.g. an access violation)
+        LOG("[gamebuild]   exit status %d\n", exit_code);
+    FILE *f = fopen(path, "rb");
+    if (!f) return;
+    static char buf[16384];
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f);
+    fseek(f, size > (long)sizeof buf - 1 ? size - (long)sizeof buf + 1 : 0, SEEK_SET);
+    size_t k = fread(buf, 1, sizeof buf - 1, f);
+    fclose(f);
+    buf[k] = 0;
+    const char *line[40];
+    int n = 0;
+    for (char *s = buf, *e; *s; s = e) {
+        e = s + strcspn(s, "\n");
+        if (*e) *e++ = 0;
+        size_t l = strlen(s);
+        if (l && s[l - 1] == '\r') s[l - 1] = 0;
+        if (!*s || strstr(s, ": progress ")) continue;  // (the progress bar's lines)
+        if (n == 40) memmove(line, line + 1, sizeof line[0] * --n);
+        line[n++] = s;
+    }
+    if (!n) LOG("[gamebuild]   (no message in its log)\n");
+    for (int i = 0; i < n; i++) LOG("[gamebuild]   | %s\n", line[i]);
+}
+
 // ------------------------------------------------------------------ compiling
 typedef struct {
     char src[1100], obj[1100], log[1100];
@@ -418,6 +449,7 @@ bool gamebuild_run(const char *game_dir, const GameBuildOpts *o, char *why, size
                         char last[300];
                         log_tail(g->log, last, sizeof last);
                         LOG("[gamebuild] generator (%s) failed: %s\n", g->name, last);
+                        log_gen_tail(g->log, r);
                         snprintf(why, why_size, "the game code couldn't be prepared");
                         ok = false;
                     }
