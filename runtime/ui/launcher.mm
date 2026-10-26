@@ -1579,6 +1579,16 @@ extern "C" void launcher_run(const char *root, int mode) {
             if (shot) exit(0);
 #endif
         }
+        // At most 60 frames a second, 20 without focus (#131): the present mode is the game's (Video > VSync), and with
+        // Fast (mailbox) or Off nothing else held this screen back, so it drew at the display's rate or faster (half a
+        // GPU on a 240 Hz display) for a picture that moves slowly, also while the setup builds the game code.
+        if (!shot_at) {
+            static uint64_t next;
+            uint64_t now = plat_now_ns(), period = 1000000000ull / (SDL_GetWindowFlags(win) & SDL_WINDOW_INPUT_FOCUS ? 60 : 20);
+            if (next > now + period) next = now;  // (focus came back, or the clock jumped)
+            if (next > now) plat_sleep_until_ns(next);
+            next = (next > now ? next : now) + period;
+        }
     }
     // play: hand the window to the game
     settings_save();
