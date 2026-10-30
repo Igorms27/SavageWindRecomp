@@ -3965,9 +3965,10 @@ static bool up_patch_frag(uint64_t addr, uint64_t size, VkDescriptorBufferInfo *
 // the matrix in c3[0-3], the view in c3[4-6], the pane's rectangle - width, height, left, top - in c3[33]):
 // - a layer whose matrix the game made without sead's projection classes (the menus' selection cursor) still projects
 //   16:9, and its pieces landed where the unwidened view puts them: it gets the widened matrix;
-// - a pane that covers the layer's whole 16:9 width (a fade, a loading screen's black, the menus' blurred picture of
-//   the game - a picture of the wider scene) covered only the middle of the wider picture: it gets the 16:9 matrix,
-//   which stretches it over the whole window. (The start screen is shown 16:9 with bars: output_scale.c.)
+// - a pane that covers the layer's whole 16:9 width, and not much more (a fade, a loading screen's black, the menus'
+//   blurred picture of the game - a picture of the wider scene), covered only the middle of the wider picture: it
+//   gets the 16:9 matrix, which stretches it over the whole window. (The start screen is shown 16:9 with bars:
+//   output_scale.c.) A pane much wider than the screen (the world map's picture) is not stretched (#253).
 // On a taller window (16:10, 4:3: shape < 1, #125) the same vertically: the layers' matrices get m11 x shape, and a
 // pane over the whole 16:9 height gets the 16:9 matrix.
 // In a copy of the buffer, as rt_persp makes them: m00 / shape on a wider window, m11 x shape on a narrower one.
@@ -4021,7 +4022,11 @@ static bool hud_patch(uint64_t addr, uint64_t size, VkDescriptorBufferInfo *out)
                 if (n < lo) lo = n;
                 if (n > hi) hi = n;
             }
-            if (lo <= -edge + 0.01f && hi >= edge - 0.01f) {
+            // Only a pane about the screen's size: one much wider (the world map's picture, 1500 wide, scrolled inside
+            // it; the map frame's 4660-wide strips) keeps the 16:9 layout, or its contents move ~shape x faster than
+            // the icons drawn over them (#253).
+            float over = edge * 1.05f + 0.01f;
+            if (lo <= -edge + 0.01f && hi >= edge - 0.01f && lo >= -over && hi <= over) {
                 if (tall) m11 /= shape;
                 else m00 *= shape;
             }
